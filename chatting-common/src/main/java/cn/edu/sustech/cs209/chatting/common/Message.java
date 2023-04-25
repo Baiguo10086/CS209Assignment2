@@ -1,6 +1,8 @@
 package cn.edu.sustech.cs209.chatting.common;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Message implements Serializable {
 
@@ -11,6 +13,8 @@ public class Message implements Serializable {
     private String sendTo;
 
     private String data;
+    private ArrayList<User> list;
+    private ArrayList<User> users;
 
     public Message(Long timestamp, String sentBy, String sendTo, String data) {
         this.timestamp = timestamp;
@@ -34,5 +38,12 @@ public class Message implements Serializable {
 
     public String getData() {
         return data;
+    }
+
+    public void setUsers (ArrayList<User> users ){
+        this.users = users;
+    }
+    public void setList (HashMap<String,User> list){
+        this.list = new ArrayList<>(list.values());
     }
 }
