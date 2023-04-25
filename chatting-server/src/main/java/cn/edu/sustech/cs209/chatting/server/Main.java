@@ -28,7 +28,7 @@ public class Main {
     private static final int PORT = 9990;
     private static final HashMap<String, User> names = new HashMap<>();
 
-    private static final HashMap<String,PrintWriter> name_link = new HashMap<>();
+    private static final HashMap<String, PrintWriter> name_link = new HashMap<>();
     private static final ArrayList<String> users = new ArrayList<>();
 
     static Logger logger = LoggerFactory.getLogger(Main.class);
@@ -57,7 +57,7 @@ public class Main {
         private OutputStream output_stream;
         private ObjectOutputStream ob_output_stream;
 
-        private BufferedReader  in;
+        private BufferedReader in;
         private PrintWriter out;
 
         public Handler(Socket socket) throws IOException {
@@ -72,7 +72,7 @@ public class Main {
 //                output_stream = socket.getOutputStream();
 //                ob_output_stream = new ObjectOutputStream(output_stream);
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream(),true);
+                out = new PrintWriter(socket.getOutputStream(), true);
 
                 while (true) {
                     name = in.readLine();
@@ -91,40 +91,42 @@ public class Main {
                 exit:
                 while (socket.isConnected()) {
 //                    Message input_msg = (Message) ob_input_stream.readObject();
-                    while (true){
-                    out.println("plz, send mail as [type,receiver,data]");
-                    String inmsg = in.readLine();
-                    String[] total = inmsg.split("\\s+");
+                    while (true) {
+                        out.println("plz, send mail as [type,receiver,data]");
+                        String inmsg = in.readLine();
+                        String[] total = inmsg.split("\\s+");
 //                    logger.info(name + "send msg: " + total[2] + " to "+total[1]+"type: " + total[0]);
-                    System.out.println(total);
-                    PrintWriter printWriter;
-                    switch (total[0]) {
-                        case "ls":
-                            for (String n : users) {
-                                if (!n.equals(name)) {
-                                    out.println(n);
+                        System.out.println(total);
+                        PrintWriter printWriter;
+                        switch (total[0]) {
+                            case "ls":
+                                for (String n : users) {
+                                    if (!n.equals(name)) {
+                                        out.println(n);
+                                    }
                                 }
-                            }
-                            break;
-                        case "private":
-                            if (users.contains(total[1])) {
-                                printWriter = name_link.get(total[1]);
-                                printWriter.println(total[2]);
-                            } else
-                                out.println(total[1] + "not found");
-                            break;
-                        case "group":
-                            break;
-                        case "exit":
-                            break exit;
+                                break;
+                            case "private":
+                                if (users.contains(total[1])) {
+                                    printWriter = name_link.get(total[1]);
+                                    printWriter.println(total[2]);
+                                } else {
+                                    out.println(total[1] + "not found");
+                                }
+                                break;
+                            case "group":
+                                break;
+                            case "exit":
+                                break exit;
+                        }
                     }
                 }
-                }
-            }catch (SocketException socketException){
-                logger.error("socket exception for "+name);
-            }catch (Exception e){
+                closeConnect();
+            } catch (SocketException socketException) {
+                logger.error("socket exception for " + name);
+            } catch (Exception e) {
                 logger.error("Exception in run () method for " + name);
-            }finally {
+            } finally {
                 closeConnect();
             }
         }
@@ -147,32 +149,32 @@ public class Main {
         }
 
 
-        private synchronized void closeConnect()  {
+        private synchronized void closeConnect() {
             if (name != null) {
                 names.remove(name);
                 users.remove(name);
                 logger.info("User: " + name + " has been removed!");
             }
 
-            if (out != null){
+            if (out != null) {
                 writers.remove(out);
                 logger.info("Writer object: " + name + " has been removed!");
             }
-            if (input_stream != null){
+            if (input_stream != null) {
                 try {
                     input_stream.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            if (output_stream != null){
+            if (output_stream != null) {
                 try {
                     output_stream.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            if (in != null){
+            if (in != null) {
                 try {
                     in.close();
                 } catch (IOException e) {
