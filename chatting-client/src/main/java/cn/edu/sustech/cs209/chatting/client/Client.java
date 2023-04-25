@@ -1,8 +1,11 @@
 package cn.edu.sustech.cs209.chatting.client;
 
 import cn.edu.sustech.cs209.chatting.common.Message;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.IO;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -33,32 +36,27 @@ public class Client {
     }
 
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
         try {
             Socket socket = new Socket("localhost", PORT);
-            System.out.println("st1");
-            InputStream input_stream = socket.getInputStream();
-
-//            ObjectInputStream ob_input_stream = new ObjectInputStream(input_stream);
-
+            InputStreamReader input_stream =  new InputStreamReader(socket.getInputStream());
             OutputStream output_stream = socket.getOutputStream();
-
-//            ObjectOutputStream ob_output_stream = new ObjectOutputStream(output_stream);
-
-            Scanner input = new Scanner(input_stream);
+            BufferedReader input = new BufferedReader(input_stream);
             PrintWriter output = new PrintWriter(output_stream, true);
             System.out.println("client start");
             new Thread(() -> {
                 String response;
-                while (true) {
-                    while ((response = input.nextLine()) != null) {
+                try{
+                    while ((response = input.readLine()) != null) {
                         System.out.println(response);
                     }
+                }catch (IOException e){
+                    System.out.println("Error of connect to server");
                 }
             }).start();
             System.out.println("plz,input name:");
             String inmes;
-            while (((inmes = scanner.next() )!= null)){
+            BufferedReader scanner = new BufferedReader(new InputStreamReader(System.in));
+            while (((inmes = scanner.readLine())!= null)){
                 output.println(inmes);
             }
 //            while (true){

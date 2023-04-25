@@ -91,29 +91,34 @@ public class Main {
                 exit:
                 while (socket.isConnected()) {
 //                    Message input_msg = (Message) ob_input_stream.readObject();
+                    while (true){
                     out.println("plz, send mail as [type,receiver,data]");
                     String inmsg = in.readLine();
                     String[] total = inmsg.split("\\s+");
-                    logger.info(name + "send msg: " + total[2] + " to "+total[1]+"type: " + total[0]);
+//                    logger.info(name + "send msg: " + total[2] + " to "+total[1]+"type: " + total[0]);
+                    System.out.println(total);
                     PrintWriter printWriter;
-                    switch (total[0]){
+                    switch (total[0]) {
                         case "ls":
-                            for (String n: users) {
-                                if (!n.equals(name)){
+                            for (String n : users) {
+                                if (!n.equals(name)) {
                                     out.println(n);
                                 }
                             }
+                            break;
                         case "private":
-                            if (users.contains(total[1])){
+                            if (users.contains(total[1])) {
                                 printWriter = name_link.get(total[1]);
                                 printWriter.println(total[2]);
-                            }else out.println(total[1]+"not found");
-                            break ;
+                            } else
+                                out.println(total[1] + "not found");
+                            break;
                         case "group":
-                            break ;
+                            break;
                         case "exit":
                             break exit;
                     }
+                }
                 }
             }catch (SocketException socketException){
                 logger.error("socket exception for "+name);
@@ -145,6 +150,7 @@ public class Main {
         private synchronized void closeConnect()  {
             if (name != null) {
                 names.remove(name);
+                users.remove(name);
                 logger.info("User: " + name + " has been removed!");
             }
 
