@@ -29,6 +29,7 @@ public class Main {
     private static final HashMap<String, User> names = new HashMap<>();
 
     private static final HashMap<String, PrintWriter> name_link = new HashMap<>();
+    private static final HashMap<String, HashSet<PrintWriter>> group = new HashMap<>();
     private static final ArrayList<String> users = new ArrayList<>();
 
     static Logger logger = LoggerFactory.getLogger(Main.class);
@@ -51,6 +52,7 @@ public class Main {
         private Socket socket;
         private Logger logger = LoggerFactory.getLogger(Handler.class);
         private static HashSet<PrintWriter> writers = new HashSet<>();
+
 
         private InputStream input_stream;
         private ObjectInputStream ob_input_stream;
@@ -92,7 +94,9 @@ public class Main {
                 while (socket.isConnected()) {
 //                    Message input_msg = (Message) ob_input_stream.readObject();
                     while (true) {
-                        out.println("plz, send mail as [type,receiver,data]");
+                        out.println("plz, send mail as [type,receiver,data]\n"
+                            + "creat group as [group , groupName,member....]\n"
+                        + "send mail as [groupChat,groupName,data]");
                         String inmsg = in.readLine();
                         String[] total = inmsg.split("\\s+");
 //                    logger.info(name + "send msg: " + total[2] + " to "+total[1]+"type: " + total[0]);
@@ -115,6 +119,18 @@ public class Main {
                                 }
                                 break;
                             case "group":
+                                HashSet<PrintWriter> g = new HashSet<>();
+                                g.add(out);
+                                for (int i =2 ;i<total.length;i++){
+                                    g.add(name_link.get(total[i]));
+                                }
+                                group.put(total[1],g);
+                                break;
+                            case "groupChat":
+                                for (PrintWriter p:group.get(total[1])
+                                ) {
+                                    p.println(total[2]);
+                                }
                                 break;
                             case "exit":
                                 break exit;
