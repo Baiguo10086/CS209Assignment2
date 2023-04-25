@@ -1,6 +1,12 @@
 package cn.edu.sustech.cs209.chatting.client;
 
 import cn.edu.sustech.cs209.chatting.common.Message;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.net.Socket;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -25,6 +31,18 @@ public class Controller implements Initializable {
 
     String username;
 
+    private static final int PORT = 8899;
+    Socket socket;
+
+    private InputStream input_stream;
+    private ObjectInputStream ob_input_stream;
+    private OutputStream output_stream;
+    private ObjectOutputStream ob_output_stream;
+
+
+
+
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
@@ -33,6 +51,7 @@ public class Controller implements Initializable {
         dialog.setHeaderText(null);
         dialog.setContentText("Username:");
 
+
         Optional<String> input = dialog.showAndWait();
         if (input.isPresent() && !input.get().isEmpty()) {
             /*
@@ -40,6 +59,29 @@ public class Controller implements Initializable {
                      if so, ask the user to change the username
              */
             username = input.get();
+            try{
+                System.out.println(22);
+                socket = new Socket("localhost",8899);
+                input_stream = socket.getInputStream();
+                ob_input_stream = new ObjectInputStream(input_stream);
+                output_stream = socket.getOutputStream();
+                ob_output_stream = new ObjectOutputStream(output_stream);
+                System.out.println(33);
+                Message user_msg = new Message(System.currentTimeMillis(),username,"Server",null);
+                ob_output_stream.writeObject(user_msg);
+                System.out.println(1);
+                ob_output_stream.reset();
+                boolean log = (boolean)ob_input_stream.readObject();
+//                if(log){
+//                    Platform.exit();
+//                }
+                System.out.println(1);
+            }catch (IOException e){
+                System.out.println("Server closed");
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+
         } else {
             System.out.println("Invalid username " + input + ", exiting");
             Platform.exit();
@@ -57,7 +99,7 @@ public class Controller implements Initializable {
         ComboBox<String> userSel = new ComboBox<>();
 
         // FIXME: get the user list from server, the current user's name should be filtered out
-        userSel.getItems().addAll("Item 1", "Item 2", "Item 3");
+        userSel.getItems().addAll("Item 33", "Item 2", "Item 3");
 
         Button okBtn = new Button("OK");
         okBtn.setOnAction(e -> {

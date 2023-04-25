@@ -3,6 +3,9 @@ package cn.edu.sustech.cs209.chatting.server;
 import cn.edu.sustech.cs209.chatting.common.Message;
 import cn.edu.sustech.cs209.chatting.common.Status;
 import cn.edu.sustech.cs209.chatting.common.User;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,9 +25,11 @@ import java.util.HashMap;
 
 public class Main {
 
-    private static final int PORT = 8899;
+    private static final int PORT = 9990;
     private static final HashMap<String, User> names = new HashMap<>();
-    private static final ArrayList<User> users = new ArrayList<>();
+
+    private static final HashMap<String,PrintWriter> name_link = new HashMap<>();
+    private static final ArrayList<String> users = new ArrayList<>();
 
     static Logger logger = LoggerFactory.getLogger(Main.class);
 
@@ -45,13 +50,15 @@ public class Main {
         private String name;
         private Socket socket;
         private Logger logger = LoggerFactory.getLogger(Handler.class);
-        private static HashSet<ObjectOutputStream> writers = new HashSet<>();
-        User user;
+        private static HashSet<PrintWriter> writers = new HashSet<>();
 
         private InputStream input_stream;
         private ObjectInputStream ob_input_stream;
         private OutputStream output_stream;
         private ObjectOutputStream ob_output_stream;
+
+        private BufferedReader  in;
+        private PrintWriter out;
 
         public Handler(Socket socket) throws IOException {
             this.socket = socket;
@@ -60,30 +67,52 @@ public class Main {
         public void run() {
             logger.info("Waiting user...");
             try {
-                input_stream = socket.getInputStream();
-                ob_input_stream = new ObjectInputStream(input_stream);
-                output_stream = socket.getOutputStream();
-                ob_output_stream = new ObjectOutputStream(output_stream);
+//                input_stream = socket.getInputStream();
+//                ob_input_stream = new ObjectInputStream(input_stream);
+//                output_stream = socket.getOutputStream();
+//                ob_output_stream = new ObjectOutputStream(output_stream);
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                out = new PrintWriter(socket.getOutputStream(),true);
 
-                Message mes = (Message) ob_input_stream.readObject();
-                if (check_username(mes)) {
-                    writers.add(ob_output_stream);
-                } else {
-                    ob_output_stream.writeObject(false);
-                    ob_output_stream.reset();
+                while (true) {
+                    name = in.readLine();
+//                    System.out.println(name);
+                    if (check_username(name)) {
+                        name_link.put(name, out);
+                        users.add(name);
+                        out.println("OK");
+                        break;
+                    } else {
+//                    ob_output_stream.writeObject(false);
+                        out.println("choose another name");
+//                    ob_output_stream.reset();
+                    }
                 }
-
+                exit:
                 while (socket.isConnected()) {
-
-                    Message input_msg = (Message) ob_input_stream.readObject();
-                    if (input_msg != null) {
-                        logger.info(input_msg.getSentBy() + "send msg" + input_msg.getData());
-                        for (ObjectOutputStream writer : writers) {
-                            input_msg.setList(names);
-                            input_msg.setUsers(users);
-                            writer.writeObject(input_msg);
-                            writer.reset();
-                        }
+//                    Message input_msg = (Message) ob_input_stream.readObject();
+                    out.println("plz, send mail as [type,receiver,data]");
+                    String inmsg = in.readLine();
+                    String[] total = inmsg.split("\\s+");
+                    logger.info(name + "send msg: " + total[2] + " to "+total[1]+"type: " + total[0]);
+                    PrintWriter printWriter;
+                    switch (total[0]){
+                        case "ls":
+                            for (String n: users) {
+                                if (!n.equals(name)){
+                                    out.println(n);
+                                }
+                            }
+                        case "private":
+                            if (users.contains(total[1])){
+                                printWriter = name_link.get(total[1]);
+                                printWriter.println(total[2]);
+                            }else out.println(total[1]+"not found");
+                            break ;
+                        case "group":
+                            break ;
+                        case "exit":
+                            break exit;
                     }
                 }
             }catch (SocketException socketException){
@@ -96,41 +125,32 @@ public class Main {
         }
 
         /**
-         * @param message
+         * @param name
          * @return false means not connecting,true means connecting
          */
-        private synchronized boolean check_username(Message message) {
-            String name = message.getSentBy();
+        private synchronized boolean check_username(String name) {
             logger.info(name + "is trying to connect.");
-            if (!names.containsKey(name)) {
+            if (!name_link.containsKey(name)) {
                 this.name = name;
-                user = new User();
-                user.setName(name);
-                user.setStatus(Status.ONlINE);
-                users.add(user);
-                names.put(name, user);
+                users.add(name);
                 logger.info(this.name + "has been added in chat room.");
-                return false;
+                return true;
             } else {
                 logger.error(name + "is already connected.");
-                return true;
+                return false;
             }
         }
 
+
         private synchronized void closeConnect()  {
-            logger.debug("closeConnections() method Enter");
-            logger.info("HashMap names:" + names.size() + " writers:" + writers.size() + " usersList size:" + users.size());
             if (name != null) {
                 names.remove(name);
                 logger.info("User: " + name + " has been removed!");
             }
-            if (user != null){
-                users.remove(user);
-                logger.info("User object: " + user + " has been removed!");
-            }
-            if (ob_output_stream != null){
-                writers.remove(ob_output_stream);
-                logger.info("Writer object: " + user + " has been removed!");
+
+            if (out != null){
+                writers.remove(out);
+                logger.info("Writer object: " + name + " has been removed!");
             }
             if (input_stream != null){
                 try {
@@ -146,15 +166,14 @@ public class Main {
                     e.printStackTrace();
                 }
             }
-            if (ob_input_stream != null){
+            if (in != null){
                 try {
-                    ob_input_stream.close();
+                    in.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            logger.info("HashMap names:" + names.size() + " writers:" + writers.size() + " usersList size:" + users.size());
-            logger.debug("closeConnections() method Exit");
+
         }
 
     }
