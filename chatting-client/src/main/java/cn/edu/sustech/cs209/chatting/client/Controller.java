@@ -48,6 +48,7 @@ public class Controller implements Initializable {
         chatContentList.setCellFactory(new MessageCellFactory());
     }
 
+
     @FXML
     public void createPrivateChat() {
         AtomicReference<String> user = new AtomicReference<>();
